@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Threat Detection Interface</title>
+
+    <!-- Include Google Fonts for modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Include Leaflet.js CSS and JavaScript -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- Styling -->
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Background - Color Gradient with Animation */
+        body {
+            background: linear-gradient(45deg, #1e3c72, #2a5298, #4f6d7a, #12202c);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            height: 100%;
+            position: relative;
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* Radar Effect */
+        .radar-background {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            background: rgba(0, 255, 0, 0.2);
+            border-radius: 50%;
+            animation: radarPulse 3s infinite;
+            transform: translate(-50%, -50%);
+            border: 2px solid rgba(0, 255, 0, 0.5);
+            pointer-events: none;
+        }
+
+        @keyframes radarPulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0.3;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.6;
+            }
+        }
+
+        /* Background Particle Effects for Threat Detection */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: moveParticle 4s infinite;
+        }
+
+        @keyframes moveParticle {
+            0% {
+                transform: translate(0, 0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--x), var(--y));
+                opacity: 0;
+            }
+        }
+
+        /* Dashboard and Map Styling */
+        #dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 10px;
+            z-index: 10;
+        }
+
+        .panel {
+            flex: 1;
+            padding: 15px;
+            margin: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 8px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .controls button {
+            padding: 10px 15px;
+            background-color: #3f51b5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .controls button:hover {
+            background-color: #2c387e;
+        }
+
+        .legend {
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .legend-symbol {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            display: inline-block;
+            border-radius: 50%;
+        }
+
+        .legend-line {
+            width: 20px;
+            height: 4px;
+            margin-right: 10px;
+            display: inline-block;
+        }
+
+        .danger-symbol {
+            background-color: red;
+        }
+
+        .safe-symbol {
+            background-color: green;
+        }
+
+        .path-symbol {
+            background-color: blue;
+        }
+
+        .trajectory-symbol {
+            background: repeating-linear-gradient(90deg, orange, orange 5px, transparent 5px, transparent 10px);
+        }
+
+        /* Attack Origin Zone Styling */
+        .attack-origin-symbol {
+            background-color: purple;
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Radar Effect -->
+    <div class="radar-background"></div>
+
+    <!-- Particle Effect for Threat Detection -->
+    <div class="particles">
+        <div class="particle" style="top: 10%; left: 15%; --x: 400px; --y: 300px;"></div>
+        <div class="particle" style="top: 40%; left: 40%; --x: -300px; --y: 200px;"></div>
+        <div class="particle" style="top: 70%; left: 80%; --x: -500px; --y: -100px;"></div>
+        <div class="particle" style="top: 20%; left: 60%; --x: 200px; --y: -150px;"></div>
+        <div class="particle" style="top: 50%; left: 30%; --x: -400px; --y: 400px;"></div>
+        <div class="particle" style="top: 80%; left: 10%; --x: 500px; --y: 100px;"></div>
+    </div>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard">
+        <!-- Map Panel -->
+        <div class="panel">
+            <h3>Threat Trajectory Map</h3>
+            <div id="map"></div>
+            <div class="controls">
+                <button onclick="addDangerZone()">Add Danger Zone</button>
+                <button onclick="addSafeZone()">Add Safe Zone</button>
+                <button onclick="addPathToSafeZones()">Add Path to Safe Zones</button>
+                <button onclick="addTrajectory()">Add Trajectory</button>
+            </div>
+        </div>
+
+        <!-- Legend Panel -->
+        <div class="panel legend">
+            <h3>Map Legend</h3>
+            <div class="legend-item">
+                <span class="legend-symbol danger-symbol"></span>
+                <span>Danger Zone (Red Circle)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-symbol safe-symbol"></span>
+                <span>Safe Zone (Green Circle)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-line path-symbol"></span>
+                <span>Path to Safe Zone (Blue Line)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-line trajectory-symbol"></span>
+                <span>Attack Trajectory (Dashed Orange Line)</span>
+            </div>
+            <div class="legend-item">
+                <span class="attack-origin-symbol"></span>
+                <span>Attack Origin (Purple Dot)</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Leaflet Map Initialization -->
+    <script>
+        let map;
+        let zones = [];
+        let paths = [];
+        let trajectory = null;
+        let attackOrigin = null;
+
+        // Initialize the map
+        document.addEventListener("DOMContentLoaded", function () {
+            map = L.map('map').setView([28.7041, 77.1025], 6);
+
+            // Load OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add initial zones
+            addCircleZone(28.7041, 77.1025, 'red', 'Danger Zone - Initial');
+            addCircleZone(28.8, 77.2, 'green', 'Safe Zone - Initial');
+        });
+
+        // Function to add a circle zone
+        function addCircleZone(lat, lng, color, popupText) {
+            const circle = L.circle([lat, lng], {
+                color: color,
+                fillColor: color,
+                fillOpacity: 0.5,
+                radius: 3000
+            }).addTo(map).bindPopup(popupText);
+            zones.push(circle);
+        }
+
+        // Function to add a new Danger Zone
+        function addDangerZone() {
+            const lat = 28.7 + Math.random() * 0.2 - 0.1;
+            const lng = 77.1 + Math.random() * 0.2 - 0.1;
+            addCircleZone(lat, lng, 'red', 'New Danger Zone');
+        }
+
+        // Function to add a new Safe Zone
+        function addSafeZone() {
+            const lat = 28.7 + Math.random() * 0.2 - 0.1;
+            const lng = 77.1 + Math.random() * 0.2 - 0.1;
+            addCircleZone(lat, lng, 'green', 'New Safe Zone');
+        }
+
+        // Function to add trajectory from external origin to Danger Zone
+        function addTrajectory() {
+            clearTrajectory();
+            const origin = [34.5, 69.2]; // Fixed location outside India (Afghanistan)
+            const dangerZone = zones.find(zone => zone.options.color === 'red'); // First Danger Zone
+
+            if (dangerZone) {
+                // Place the Attack Origin marker at the trajectory origin
+                if (attackOrigin) {
+                    map.removeLayer(attackOrigin);
+                }
+                attackOrigin = L.marker(origin, {
+                    icon: L.divIcon({
+                        className: 'attack-origin-symbol',
+                        iconSize: [15, 15],
+                        iconAnchor: [7, 7],
+                    })
+                }).addTo(map).bindPopup("Attack Origin Zone");
+
+                // Add trajectory
+                trajectory = L.polyline([origin, dangerZone.getLatLng()], {
+                    color: 'orange',
+                    weight: 4,
+                    dashArray: '5,10',
+                    opacity: 0.8
+                }).addTo(map).bindPopup("Trajectory: External Origin to Danger Zone");
+            } else {
+                alert("Please add a Danger Zone first.");
+            }
+        }
+
+        // Function to add paths from Danger Zones to Safe Zones
+        function addPathToSafeZones() {
+            clearPaths();
+            zones.forEach(dangerZone => {
+                if (dangerZone.options.color === 'red') {
+                    const nearestSafeZone = findNearestSafeZone(dangerZone.getLatLng());
+                    if (nearestSafeZone) {
+                        const path = L.polyline([dangerZone.getLatLng(), nearestSafeZone.getLatLng()], {
+                            color: 'blue',
+                            weight: 4,
+                            opacity: 0.7
+                        }).addTo(map).bindPopup("Path to Safe Zone");
+                        paths.push(path);
+                    }
+                }
+            });
+        }
+
+        // Function to find the nearest Safe Zone
+        function findNearestSafeZone(dangerLatLng) {
+            let nearestZone = null;
+            let minDistance = Infinity;
+            zones.forEach(zone => {
+                if (zone.options.color === 'green') {
+                    const distance = dangerLatLng.distanceTo(zone.getLatLng());
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestZone = zone;
+                    }
+                }
+            });
+            return nearestZone;
+        }
+
+        // Clear trajectory
+        function clearTrajectory() {
+            if (trajectory) {
+                map.removeLayer(trajectory);
+                trajectory = null;
+            }
+        }
+
+        // Clear paths
+        function clearPaths() {
+            paths.forEach(path => map.removeLayer(path));
+            paths = [];
+        }
+    </script>
+
+</body>
+</html>

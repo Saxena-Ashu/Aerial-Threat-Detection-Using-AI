@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Threat Detection</title>
+    
+    <!-- Link to Google Fonts for modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Include Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- Include CSS for animation and background effects -->
+    <style>
+        /* Reset some default styles */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Background Gradient with Radar and Crowd Dispersion Effects */
+        body {
+            background: linear-gradient(135deg, #3f51b5, #2196F3);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Radar Circle Animation */
+        .radar {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            background: rgba(0, 255, 0, 0.2);
+            border-radius: 50%;
+            animation: radarAnimation 2s infinite;
+            transform: translate(-50%, -50%);
+            border: 2px solid rgba(0, 255, 0, 0.5);
+            pointer-events: none;
+        }
+
+        @keyframes radarAnimation {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.3; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+        }
+
+        /* Particle Effect for Crowd Dispersion */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: disperseParticles 3s infinite;
+        }
+
+        @keyframes disperseParticles {
+            0% { transform: translate(0, 0); opacity: 1; }
+            100% { transform: translate(var(--x), var(--y)); opacity: 0; }
+        }
+
+        /* Centered Content */
+        .container {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #ffffff;
+            color: #3f51b5;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            background-color: #3f51b5;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn i {
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+
+        /* Animation for loading */
+        .loading-text {
+            font-size: 1.4rem;
+            color: #fff;
+            animation: fadeInOut 1.5s infinite;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Map Container */
+        #map-container {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Radar Effect for Threat Detection -->
+    <div class="radar"></div>
+
+    <!-- Particle Effect for Crowd Dispersion -->
+    <div class="particles">
+        <div class="particle" style="top: 10%; left: 15%; --x: 400px; --y: 300px;"></div>
+        <div class="particle" style="top: 40%; left: 40%; --x: -300px; --y: 200px;"></div>
+        <div class="particle" style="top: 70%; left: 80%; --x: -500px; --y: -100px;"></div>
+        <div class="particle" style="top: 20%; left: 60%; --x: 200px; --y: -150px;"></div>
+        <div class="particle" style="top: 50%; left: 30%; --x: -400px; --y: 400px;"></div>
+        <div class="particle" style="top: 80%; left: 10%; --x: 500px; --y: 100px;"></div>
+    </div>
+
+    <!-- Centered Content -->
+    <div class="container">
+        <h1>Welcome to the Threat Detection System</h1>
+        <p>Click below to access the interactive map and threat detection interface.</p>
+        
+        <!-- Go to Interface Button (Redirect to /interface) -->
+        <a href="{{ url_for('interface') }}" class="btn">
+            <i class="fas fa-map-marked-alt"></i>
+            Go to Interface
+        </a>
+
+        <!-- Accurate Button (Triggers the /accurate route) -->
+        <button id="accurate-btn" class="btn">
+            <i class="fas fa-brain"></i>
+            Accurate
+        </button>
+
+        <!-- Loading Text -->
+        <p id="loading-text" class="loading-text" style="display: none;">Loading... Please wait.</p>
+
+        <!-- Map Container -->
+        <div id="map-container">
+            <img id="threat-map" src="" alt="Threat Map" style="width: 100%; height: auto;" />
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("accurate-btn").addEventListener("click", function() {
+            // Example user coordinates (You can replace these with actual data from a location service)
+            const userLocation = { latitude: 40.7128, longitude: -74.0060 };  // New York City as an example
+            
+            // Show loading text
+            document.getElementById("loading-text").style.display = "block";
+            document.getElementById("map-container").style.display = "none";
+
+            // Send AJAX POST request to Flask server
+            fetch('/accurate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `latitude=${userLocation.latitude}&longitude=${userLocation.longitude}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading text and show the map
+                document.getElementById("loading-text").style.display = "none";
+                document.getElementById("map-container").style.display = "block";
+                
+                // Update the map image with the base64 encoded image
+                document.getElementById("threat-map").src = `data:image/png;base64,${data.map_image}`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("There was an error processing your request.");
+            });
+        });
+    </script>
+
+</body>
+</html>
